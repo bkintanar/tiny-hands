@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Eloquent\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -26,7 +25,5 @@ class RolesTableSeeder extends Seeder
         $role = Role::first();
 
         $role->givePermissionTo(Permission::all());
-
-        (User::find(1))->assignRole($role);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use HRis\Auth\Eloquent\User;
+use App\Eloquent\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;

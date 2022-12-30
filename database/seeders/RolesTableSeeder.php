@@ -23,8 +23,13 @@ class RolesTableSeeder extends Seeder
 
         $roles = [
             ['name' => 'admin', 'guard_name' => 'api', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'teacher', 'guard_name' => 'api', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'parent', 'guard_name' => 'api', 'created_at' => now(), 'updated_at' => now()],
+            ['name' => 'student', 'guard_name' => 'api', 'created_at' => now(), 'updated_at' => now()],
         ];
+
         DB::table('roles')->insert($roles);
+
         foreach ($roles as $k => $name) {
             $role = Role::where('name', $name)->first();
 

@@ -46,6 +46,8 @@ class RouteServiceProvider extends ServiceProvider
             Route::middleware('web')
                 ->namespace($this->namespace)
                 ->group(base_path('routes/web.php'));
+
+            $this->portalRoutes();
         });
     }
 
@@ -59,5 +61,21 @@ class RouteServiceProvider extends ServiceProvider
         RateLimiter::for('api', function (Request $request) {
             return Limit::perMinute(60)->by(optional($request->user())->id ?: $request->ip());
         });
+    }
+
+    /**
+     * Define portal routes
+     *
+     * @return void
+     */
+    private function portalRoutes(): void
+    {
+        $portals = config('skooltek.portals');
+
+        foreach ($portals as $file) {
+            Route::middleware('api')
+                ->as("{$file[0]}::")
+                ->group(base_path("routes/skooltek/{$file}.php"));
+        }
     }
 }

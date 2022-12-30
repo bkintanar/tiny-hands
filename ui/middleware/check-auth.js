@@ -1,15 +1,23 @@
-export default async ({ store, $axios, req }) => {
-  const token = store.getters['auth/token']
+import { defineNuxtRouteMiddleware } from '#app'
+import {useAuthStore} from "~/store/auth";
+import {useLangStore} from "~/store/lang";
 
-  if (process.server) {
-    if (token) {
-      $axios.defaults.headers.common.Authorization = `Bearer ${token}`
-    } else {
-      delete $axios.defaults.headers.common.Authorization
-    }
+export default defineNuxtRouteMiddleware(async (to, from ) => {
+  const authStore = useAuthStore()
+  const langStore = useLangStore()
+
+  const tokenInCookie = useCookie('token').value
+  const localeInCookie = useCookie('locale').value
+
+  if (tokenInCookie && !authStore.getToken) {
+    authStore.saveToken(tokenInCookie)
   }
 
-  if (!store.getters['auth/check'] && token) {
-    await store.dispatch('auth/fetchUser')
+  if (!authStore.check && authStore.getToken != null) {
+    await authStore.fetchUser()
   }
-}
+
+  if (localeInCookie) {
+    await langStore.setLocale(localeInCookie)
+  }
+})

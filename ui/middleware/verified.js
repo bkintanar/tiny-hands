@@ -1,7 +1,12 @@
-export default ({ store, redirect }) => {
-  const user = store.getters['auth/user']
+import { defineNuxtRouteMiddleware } from '#app'
+import {useAuthStore} from "~/store/auth";
+
+export default defineNuxtRouteMiddleware(async(to, from ) => {
+  const authStore = useAuthStore()
+
+  const user = authStore.getUser
 
   if (user && !user.email_verified_at) {
-    return redirect('/verification/resend')
+    return navigateTo({name: 'verification.index'})
   }
-}
+})

@@ -31,7 +31,7 @@ class ResetPasswordController extends Controller
      */
     protected function sendResetResponse(Request $request, $response)
     {
-        return response()->json(['status' => trans('auth::'.$response)], Response::HTTP_OK);
+        return response()->json(['status' => trans($response)], Response::HTTP_OK);
     }
 
     /**
@@ -44,6 +44,6 @@ class ResetPasswordController extends Controller
      */
     protected function sendResetFailedResponse(Request $request, $response)
     {
-        return response()->json(['email' => trans('auth::'.$response)], Response::HTTP_BAD_REQUEST);
+        return response()->json(['email' => trans($response)], Response::HTTP_BAD_REQUEST);
     }
 }

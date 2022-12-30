@@ -42,7 +42,7 @@ class CreateTenant implements ShouldQueue
     {
         $this->tenant = Tenant::create($this->data);
 
-        $user = $this->registerAdmin();
+        $this->registerAdmin();
 
         return $this->tenant;
     }
@@ -53,11 +53,11 @@ class CreateTenant implements ShouldQueue
 
         $user = User::create($this->data);
 
-        $role = Role::first();
-        // TODO
-//        $role->givePermissionTo(Permission::all());
+        $roles = Role::all();
 
-        $user->assignRole($role);
+        foreach ($roles as $role) {
+            $user->assignRole($role);
+        }
 
         Artisan::call('passport:client', ['--personal' => true, '--name' => 'Personal Access Client', '--no-interaction' => true, '--tenant' => $this->tenant->id]);
         Artisan::call('passport:client', ['--password' => true, '--name' => 'Password Grant Client', '--no-interaction' => true, '--tenant' => $this->tenant->id]);

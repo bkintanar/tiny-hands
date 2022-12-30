@@ -3,7 +3,7 @@
 namespace App\Solutions;
 
 use Illuminate\Support\Facades\Artisan;
-use Facade\IgnitionContracts\RunnableSolution;
+use Spatie\Ignition\Contracts\RunnableSolution;
 
 class UIAssetsNotFoundSolution implements RunnableSolution
 {
@@ -19,7 +19,7 @@ class UIAssetsNotFoundSolution implements RunnableSolution
 
     public function getDocumentationLinks(): array
     {
-        return ['README.md' => 'https://gitlab.com/tiny-hands'];
+        return ['README.md' => 'https://github.com/bkintanar/tiny-hands'];
     }
 
     public function getSolutionActionDescription(): string
@@ -32,7 +32,7 @@ class UIAssetsNotFoundSolution implements RunnableSolution
         return 'Publish ' . config('app.name') . ' UI assets';
     }
 
-    public function run(array $parameters = [])
+    public function run(array $parameters = []): void
     {
         Artisan::call('vendor:publish', $parameters);
     }

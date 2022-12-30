@@ -3,9 +3,10 @@
 namespace App\Http\Controllers;
 
 use Exception;
+use App\Eloquent\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 use Laravel\Passport\PersonalAccessTokenResult;
@@ -117,6 +118,6 @@ class LoginController extends Controller
 
     public function user(Request $request)
     {
-        return $request->user();
+        return new UserResource($request->user());
     }
 }

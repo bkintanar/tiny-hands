@@ -2,9 +2,9 @@
 
 namespace App\Exceptions;
 
-use Facade\IgnitionContracts\Solution;
+use Spatie\Ignition\Contracts\Solution;
 use App\Solutions\UIAssetsNotFoundSolution;
-use Facade\IgnitionContracts\ProvidesSolution;
+use Spatie\Ignition\Contracts\ProvidesSolution;
 use Illuminate\Contracts\Filesystem\FileNotFoundException;
 
 class UIAssetsNotFoundException extends FileNotFoundException implements ProvidesSolution

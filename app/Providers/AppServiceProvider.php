@@ -29,6 +29,6 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes([__DIR__.'/../../ui/build' => public_path()], 'tiny-hands::ui');
+        $this->publishes([__DIR__.'/../../ui/.output/public' => public_path()], 'tiny-hands::ui');
     }
 }

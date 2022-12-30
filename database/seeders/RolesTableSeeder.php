@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Eloquent\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
@@ -9,6 +10,8 @@ use Spatie\Permission\Models\Permission;
 
 class RolesTableSeeder extends Seeder
 {
+    public const ROLE_ID_ADMIN = 1;
+
     /**
      * Run the database seeds.
      *
@@ -18,12 +21,18 @@ class RolesTableSeeder extends Seeder
     {
         DB::table('roles')->delete();
 
-        DB::table('roles')->insert([
-            ['name' => 'super-admin', 'guard_name' => 'api'],
-        ]);
+        $roles = [
+            ['name' => 'admin', 'guard_name' => 'api', 'created_at' => now(), 'updated_at' => now()],
+        ];
+        DB::table('roles')->insert($roles);
+        foreach ($roles as $k => $name) {
+            $role = Role::where('name', $name)->first();
 
-        $role = Role::first();
+            if ($k+1 == self::ROLE_ID_ADMIN) {
+                $role->givePermissionTo(Permission::all());
+            }
 
-        $role->givePermissionTo(Permission::all());
+            (User::find($k+1))->assignRole($role);
+        }
     }
 }

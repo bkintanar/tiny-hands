@@ -44,7 +44,7 @@ class CreateTenantCommand extends Command
             'name'                  => ucfirst($tenant),
         ];
 
-        $website = (new CreateTenant($data))->handle();
+        $tenant = (new CreateTenant($data))->handle();
 
         $this->info('New Tenant Created: '. $url . PHP_EOL);
     }

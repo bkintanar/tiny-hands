@@ -67,7 +67,7 @@ class Tenant extends Model implements TenantContract, IdentifiesByHttp, Identifi
      *
      * @return string|int
      */
-    public function getTenantKey()
+    public function getTenantKey(): string|int
     {
         return $this->uuid;
     }

@@ -4,13 +4,10 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Auth\Events\Verified;
-use Illuminate\Foundation\Auth\VerifiesEmails;
 use Symfony\Component\HttpFoundation\Response;
 
 class VerificationController extends Controller
 {
-    use VerifiesEmails;
-
     /**
      * Mark the authenticated user's email address as verified.
      *

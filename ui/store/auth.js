@@ -1,79 +1,56 @@
+import { defineStore } from 'pinia'
 import Cookies from 'js-cookie'
+import { useTinyHandsFetch } from '~/composables/useTinyHandsFetch'
 
-// state
-export const state = () => ({
-  user: null,
-  token: null,
-})
+export const useAuthStore = defineStore('auth-store', {
+  state: () => ({
+    user: null,
+    token: null,
+    roles: ['admin', 'moderator', 'member'],
+  }),
 
-// getters
-export const getters = {
-  user: (state) => state.user,
-  token: (state) => state.token,
-  check: (state) => state.user !== null,
-}
+  actions: {
+    saveToken (token, remember) {
+      this.token = token
 
-// mutations
-export const mutations = {
-  SET_TOKEN(state, token) {
-    state.token = token
-  },
+      Cookies.set('token', token, { expires: remember ? 365 : null })
+    },
 
-  FETCH_USER_SUCCESS(state, user) {
-    state.user = user
-  },
+    saveUser (user) {
+      this.user = user
+    },
 
-  FETCH_USER_FAILURE(state) {
-    state.token = null
-  },
+    async fetchUser () {
+      if (this.token !== null) {
+        try {
+          const response = await useTinyHandsFetch('/user')
 
-  LOGOUT(state) {
-    state.user = null
-    state.token = null
-  },
+          this.saveUser(response.data)
 
-  UPDATE_USER(state, { user }) {
-    state.user = user
-  },
-}
+          return this.getUser
+        } catch (err) {
+          await this.logout()
+        }
+      }
+    },
 
-// actions
-export const actions = {
-  saveToken({ commit, dispatch }, { token, remember }) {
-    commit('SET_TOKEN', token)
+    async logout () {
+      try {
+        await useTinyHandsFetch('/logout', { method: 'post' })
 
-    Cookies.set('token', token, { expires: remember ? 365 : null })
-  },
+        this.user = null
+        this.token = null
 
-  async fetchUser({ commit }) {
-    try {
-      const { data } = await this.$axios.get('/user')
+      } catch (err) {}
 
-      commit('FETCH_USER_SUCCESS', data)
-    } catch (e) {
       Cookies.remove('token')
-
-      commit('FETCH_USER_FAILURE')
     }
   },
 
-  updateUser({ commit }, payload) {
-    commit('UPDATE_USER', payload)
+  getters: {
+    getUser: state => state.user,
+    getToken: state => state.token,
+    getSupportedRoles: state => state.roles,
+    check: state => state.user !== null,
   },
-
-  async logout({ commit }) {
-    try {
-      await this.$axios.post('/logout')
-    } catch (e) {}
-
-    Cookies.remove('token')
-
-    commit('LOGOUT')
-  },
-
-  async fetchOauthUrl(ctx, { provider }) {
-    const { data } = await this.$axios.post(`/oauth/${provider}`)
-
-    return data.url
-  },
-}
+})

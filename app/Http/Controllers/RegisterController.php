@@ -71,7 +71,7 @@ class RegisterController extends Controller
      *
      * @param  array  $data
      *
-     * @return \TicketSA\Eloquent\Customer
+     * @return User
      */
     protected function create(array $data)
     {

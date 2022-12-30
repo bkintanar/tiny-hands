@@ -1,19 +1,12 @@
 <template>
-  <div
-    class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
-  >
+  <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <nuxt-link
-        :to="{ name: 'index' }"
-        class="font-medium text-indigo-600 hover:text-indigo-500"
+      <img
+        class="mx-auto h-12 w-auto"
+        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+        alt="Your Company"
       >
-        <img
-          class="mx-auto h-12 w-auto"
-          src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-          alt="Workflow"
-        />
-      </nuxt-link>
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
         {{ $t('reset_password') }}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
@@ -25,43 +18,48 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form
           class="space-y-6"
+          action="#"
           @submit.prevent="reset"
           @keydown="form.onKeydown($event)"
         >
+          <!-- email input -->
           <ui-input
+            v-model="form.email"
+            :disabled="true"
+            :errors="form.errors"
+            required
             name="email"
             type="email"
-            :has-error="form.errors.has('email')"
-            :disabled="true"
-            :value="form.email"
-            @update:modelValue="form.email = $event"
           >
             {{ $t('email_address') }}
           </ui-input>
 
           <ui-input
+            v-model="form.password"
+            :errors="form.errors"
+            error-key="password"
+            required
             name="password"
             type="password"
-            autocomplete="current-password"
-            :has-error="form.errors.has('password')"
-            :value="form.password"
-            @update:modelValue="form.password = $event"
           >
             {{ $t('password') }}
           </ui-input>
 
           <ui-input
+            v-model="form.password_confirmation"
+            :errors="form.errors"
+            error-key="password"
+            required
             name="password_confirmation"
             type="password"
-            :has-error="form.errors.has('password')"
-            :value="form.password_confirmation"
-            @update:modelValue="form.password_confirmation = $event"
           >
             {{ $t('password_confirmation') }}
           </ui-input>
-
           <div>
-            <ui-button :loading="form.busy">
+            <ui-button
+              :loading="form.busy"
+              :loading-text="$t('resetting_password')"
+            >
               {{ $t('reset_password') }}
             </ui-button>
           </div>
@@ -71,67 +69,97 @@
     </div>
   </div>
 </template>
+<script setup>
+import { ref } from 'vue'
+import { notify } from '@kyvg/vue3-notification'
+import { useTinyHandsFetch } from '~/composables/useTinyHandsFetch'
 
-<script>
-import Form from 'vform'
-import { forEach } from 'lodash-es'
+const { t } = useI18n()
+const route = useRoute()
 
-export default {
+definePageMeta({
   layout: 'default',
-  data: () => ({
-    status: '',
-    error: '',
-    form: new Form({
-      token: '',
-      email: '',
-      password: '',
-      password_confirmation: '',
-    }),
-  }),
-  head() {
-    return { title: this.$t('reset_password') }
+  middleware: ['check-auth', 'guest'],
+})
+
+const form = ref({
+  email: route.query.email,
+  token: route.params.token,
+  password: '',
+  password_confirmation: '',
+  busy: false,
+
+  onKeydown (event) {
+    this.errors.props = []
   },
 
-  created() {
-    this.form.email = this.$route.query.email
-    this.form.token = this.$route.params.token
+  params () {
+    return {
+      email: this.email,
+      password: this.password,
+      password_confirmation: this.password_confirmation,
+      token: this.token,
+    }
   },
 
-  methods: {
-    async reset() {
-      try {
-        const response = await this.form.post('/password/reset')
+  errors: {
+    props: [],
 
-        this.$notify({
-          title: this.$t('successful'),
-          text: response.data.status,
-          type: 'success',
-          duration: 5000,
-        })
+    has (key) {
+      return this.props?.hasOwnProperty(key) ?? false
+    },
 
-        this.form.reset()
+    get (key) {
+      const keyValue = this.has(key)
 
-        this.$router.push({ name: 'index' })
-      } catch (e) {
-        if (e.response.data.errors) {
-          forEach(e.response.data.errors, (error) => {
-            this.$notify({
-              title: e.response.data.message,
-              text: error[0],
-              type: 'error',
-              duration: 5000,
-            })
-          })
-        } else if (e.response.data.email) {
-          this.$notify({
-            title: this.$t('whoops'),
-            text: e.response.data.email,
-            type: 'error',
-            duration: 5000,
-          })
+      if (keyValue) {
+        if (Array.isArray(this.props[key])) {
+          return this.props[key][0]
+        } else {
+          return this.props[key]
         }
       }
+
+      return null
     },
   },
+
+  async post (url) {
+    try {
+      this.busy = true
+
+      const response = await useTinyHandsFetch(url, {
+        method: 'POST',
+        body: this.params()
+      })
+
+      this.busy = false
+
+      return response
+    } catch (err) {
+      this.busy = false
+
+      if (err.data.errors !== undefined) {
+        this.errors.props = err.data.errors
+      } else {
+        this.errors.props = err.data
+      }
+    }
+  }
+})
+
+async function reset () {
+  const response = await form.value.post('/password/reset')
+
+  if (!form.value.errors.props.length) {
+    notify({
+      title: t('successful'),
+      text: response.status,
+      type: 'success',
+      duration: 5000,
+    })
+
+    return navigateTo({ name: 'index' })
+  }
 }
 </script>

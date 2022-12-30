@@ -1,6 +1,7 @@
 <template>
-  <div>
-    <ui-notification />
-    <nuxt />
-  </div>
+  <ui-notification />
+  <nuxt-page />
 </template>
+
+<script setup>
+</script>

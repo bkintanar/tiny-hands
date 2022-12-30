@@ -1,25 +1,16 @@
 <template>
-  <div
-    class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
-  >
+  <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <nuxt-link
-        :to="{ name: 'index' }"
-        class="font-medium text-indigo-600 hover:text-indigo-500"
+      <img
+        class="mx-auto h-12 w-auto"
+        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+        alt="Your Company"
       >
-        <img
-          class="mx-auto h-12 w-auto"
-          src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-          alt="Workflow"
-        />
-      </nuxt-link>
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        {{ $t('Verify your account') }}
+      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        {{ $t('verify_your_account') }}
       </h2>
       <p class="mt-2 text-center text-sm text-gray-600">
-        Thanks for signing up! Before getting started, could you verify your
-        email address by clicking on the link we just emailed to you? If you
-        didn't receive the email, we will gladly send you another.
+        {{ $t('verify_your_account_description') }}
       </p>
     </div>
 
@@ -27,28 +18,27 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form
           class="space-y-6"
+          action="#"
           @submit.prevent="resend"
           @keydown="form.onKeydown($event)"
         >
           <div>
-            <ui-button :loading="form.busy">
+            <ui-button
+              :loading="form.busy"
+              :loading-text="$t('resending_verification_email')"
+            >
               {{ $t('resend_verification_email') }}
             </ui-button>
-            <p v-if="status" class="mt-2 text-sm text-green-600">adsfadsf</p>
-            <p v-if="error != false" class="mt-2 text-sm text-red-600">
-              {{ error }}
-            </p>
           </div>
         </form>
-
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300"></div>
+              <div class="w-full border-t border-gray-300" />
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-gray-500">
-                {{ $t('Not ready to verify your account?') }}
+                {{ $t('not_ready_to_verify_your_account') }}
               </span>
             </div>
           </div>
@@ -56,13 +46,13 @@
           <div class="mt-6">
             <div>
               <span class="w-full inline-flex rounded-md shadow-sm">
-                <a
-                  href="#logout"
-                  class="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md bg-white text-sm leading-5 font-medium text-gray-500 hover:text-gray-400 focus:outline-none focus:border-blue-300 focus:shadow-outline-blue transition duration-150 ease-in-out"
-                  @click.prevent="exit"
+                <ui-button
+                  native-type="button"
+                  type="secondary"
+                  @click.prevent="logout"
                 >
                   {{ $t('logout') }}
-                </a>
+                </ui-button>
               </span>
             </div>
           </div>
@@ -72,82 +62,113 @@
     </div>
   </div>
 </template>
+<script setup>
+import { ref } from 'vue'
+import { useAuthStore } from '~/store/auth'
+import { notify } from '@kyvg/vue3-notification'
 
-<script>
-import Form from 'vform'
-import { mapGetters, mapActions } from 'vuex'
+const { t } = useI18n()
 
-export default {
+definePageMeta({
   layout: 'default',
-  middleware: 'auth',
-  data: () => ({
-    status: '',
-    error: false,
-    form: new Form({}),
-  }),
+  middleware: ['check-auth', 'auth'],
+})
 
-  head() {
-    return { title: this.$t('Verify your account') }
+const form = ref({
+  email: '',
+  busy: false,
+
+  onKeydown (event) {
+    this.errors.props = []
   },
 
-  computed: {
-    ...mapGetters({
-      user: 'auth/user',
-    }),
-  },
-
-  async mounted() {
-    await this.fetchUser()
-
-    if (this.user.email_verified_at) {
-      const name = 'dashboard'
-      this.$router.push({ name })
+  params () {
+    return {
+      email: this.email,
     }
   },
 
-  methods: {
-    ...mapActions({
-      fetchUser: 'auth/fetchUser',
-    }),
+  errors: {
+    props: [],
 
-    async exit() {
-      // Log out the user.
-      await this.$store.dispatch('auth/logout')
-
-      // Redirect to index.
-      this.$router.push({ name: 'index' })
+    has (key) {
+      return this.props?.hasOwnProperty(key) ?? false
     },
 
-    async resend() {
-      this.status = this.error = false
+    get (key) {
+      const keyValue = this.has(key)
 
-      // Fetch the user.
-      await this.fetchUser()
-
-      if (this.user.email_verified_at) {
-        this.$router.push({ name: 'index' })
+      if (keyValue) {
+        if (Array.isArray(this.props[key])) {
+          return this.props[key][0]
+        } else {
+          return this.props[key]
+        }
       }
 
-      try {
-        await this.form.post('/email/resend')
-
-        this.$notify({
-          title: this.$t('successful'),
-          text: this.$t('verify_email_address'),
-          type: 'success',
-          duration: 5000,
-        })
-
-        this.form.reset()
-      } catch (e) {
-        this.$notify({
-          title: this.$t('whoops'),
-          text: e.response.data.message,
-          type: 'error',
-          duration: 5000,
-        })
-      }
+      return null
     },
   },
+
+  async post (url) {
+    try {
+      this.busy = true
+
+      const response = await useTinyHandsFetch(url, {
+        method: 'POST',
+        body: this.params()
+      })
+
+      this.busy = false
+
+      return response
+    } catch (err) {
+      this.busy = false
+
+      if (err.data.errors !== undefined) {
+        this.errors.props = err.data.errors
+      } else {
+        this.errors.props = err.data
+      }
+    }
+  }
+})
+
+async function resend () {
+  const authStore = useAuthStore()
+
+  const user = await authStore.fetchUser()
+
+  console.log(user)
+
+  if (user.email_verified_at) {
+    return navigateTo({ name: 'index' })
+  }
+
+  try {
+    await form.value.post('/email/resend')
+
+    notify({
+      title: t('successful'),
+      text: t('verify_email_address'),
+      type: 'success',
+      duration: 5000,
+    })
+  } catch (e) {
+    notify({
+      title: t('whoops'),
+      text: e.response.data.message,
+      type: 'error',
+      duration: 5000,
+    })
+  }
+}
+
+async function logout () {
+  const authStore = useAuthStore()
+
+  await authStore.logout()
+
+  return navigateTo({ name: 'login' })
 }
 </script>

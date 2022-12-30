@@ -1,16 +1,21 @@
+/** @type {import('tailwindcss').Config} */
 module.exports = {
-  theme: {
-    minWidth: {
-      '0': '0',
-      '1/4': '25%',
-      '1/2': '50%',
-      '3/4': '75%',
-      'full': '100%',
-    },
-  },
-  // ...
-  plugins: [
-    // ...
-    require('@tailwindcss/forms'),
+  mode: "jit",
+  content: [
+    "./components/**/*.{vue,js}",
+    "./layouts/**/*.vue",
+    "./pages/**/*.vue",
+    "./plugins/**/*.{js,ts}",
+    "./nuxt.config.{js,ts}",
   ],
-}
+  darkMode: 'media', // or 'media' or 'class'
+  theme: {
+    extend: {},
+  },
+  variants: {
+    extend: {},
+  },
+  plugins: [
+    require('@tailwindcss/forms')
+  ],
+};

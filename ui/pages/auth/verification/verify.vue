@@ -1,75 +1,67 @@
-<template><div></div></template>
+<template>
+  <div />
+</template>
+<script setup>
+import { useNuxtApp } from 'nuxt/app'
+import { useAuthStore } from '~/store/auth'
+import { onMounted } from 'vue'
 
-<script>
-import Form from 'vform'
-import { mapGetters, mapActions } from 'vuex'
+useNuxtApp()
+import { notify } from '@kyvg/vue3-notification'
 
-export default {
+definePageMeta({
   layout: 'default',
-  middleware: 'auth',
-  data: () => ({
-    status: '',
-    form: new Form({}),
-  }),
+  middleware: ['check-auth', 'auth'],
+})
 
-  head() {
-    return { title: this.$t('Verify your account') }
-  },
+const { t } = useI18n()
+const authStore = useAuthStore()
+const route = useRoute()
 
-  computed: {
-    ...mapGetters({
-      token: 'auth/token',
-      user: 'auth/user',
-    }),
-  },
-
-  async mounted() {
-    await this.fetchUser()
-
-    if (this.user.email_verified_at) {
-      const name = 'index'
-      this.$router.push({ name })
-    }
-  },
-
-  async beforeCreate() {
-    const params = {
-      expires: this.$route.query.expires,
-      hash: this.$route.query.hash,
-      signature: this.$route.query.signature,
-    }
-
-    try {
-      await this.$axios.get('/email/verify/' + this.$route.params.id, {
-        params,
-      })
-
-      await this.fetchUser()
-
-      this.$router.push({ name: 'index' })
-
-      this.$notify({
-        title: this.$t('successful'),
-        text: this.$t('email_successfully_verified'),
-        type: 'success',
-        duration: 5000,
-      })
-    } catch (e) {
-      this.$router.push({ name: 'verification.index' })
-
-      this.$notify({
-        title: this.$t('whoops'),
-        text: e.response.data.message,
-        type: 'error',
-        duration: 5000,
-      })
-    }
-  },
-
-  methods: {
-    ...mapActions({
-      fetchUser: 'auth/fetchUser',
-    }),
-  },
+const params = {
+  expires: route.query.expires,
+  hash: route.query.hash,
+  signature: route.query.signature,
 }
+
+onMounted(async () => {
+  const user = await authStore.fetchUser()
+
+  if (user && user.email_verified_at) {
+    return navigateTo({ name: 'index' })
+  }
+
+  try {
+    await useTinyHandsFetch('/email/verify/' + route.params.id, {
+      params,
+      method: 'get',
+    })
+
+    await authStore.fetchUser()
+
+    notify({
+      title: t('successful'),
+      text: t('email_successfully_verified'),
+      type: 'success',
+      duration: 5000,
+    })
+
+    return navigateTo({ name: 'index' })
+
+  } catch (err) {
+
+    notify({
+      title: t('whoops'),
+      text: err.message,
+      type: 'error',
+      duration: 5000,
+    })
+
+    if (err.message) {
+      return navigateTo({ name: 'verification.index' })
+    }
+  }
+})
+
+
 </script>

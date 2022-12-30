@@ -6,14 +6,16 @@ use App\Notifications\VerifyEmail;
 use Laravel\Passport\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Auth\Passwords\CanResetPassword;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Notifications\ResetPassword as ResetPasswordNotification;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use Notifiable, HasApiTokens, HasRoles, CanResetPassword;
+    use Notifiable, HasFactory, HasApiTokens, HasRoles, CanResetPassword, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -21,7 +23,7 @@ class User extends Authenticatable implements MustVerifyEmail
      * @var array
      */
     protected $fillable = [
-        'name', 'email', 'password', 'last_saved_locale',
+        'first_name', 'middle_name', 'last_name', 'email', 'password', 'last_saved_locale',
     ];
 
     /**

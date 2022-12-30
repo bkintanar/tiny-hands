@@ -1,20 +1,13 @@
 <template>
-  <div
-    class="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8"
-  >
+  <div class="flex min-h-full flex-col justify-center py-12 sm:px-6 lg:px-8">
     <div class="sm:mx-auto sm:w-full sm:max-w-md">
-      <nuxt-link
-        :to="{ name: 'index' }"
-        class="font-medium text-indigo-600 hover:text-indigo-500"
+      <img
+        class="mx-auto h-12 w-auto"
+        src="https://tailwindui.com/img/logos/mark.svg?color=indigo&shade=600"
+        alt="Your Company"
       >
-        <img
-          class="mx-auto h-12 w-auto"
-          src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
-          alt="Workflow"
-        />
-      </nuxt-link>
-      <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
-        {{ $t('sign_in_to_your_account') }}
+      <h2 class="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+        {{ $t('log_in_to_your_account') }}
       </h2>
     </div>
 
@@ -22,26 +15,30 @@
       <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
         <form
           class="space-y-6"
+          action="#"
           @submit.prevent="login"
           @keydown="form.onKeydown($event)"
         >
+          <!-- email input -->
           <ui-input
+            v-model="form.email"
+            :errors="form.errors"
+            error-key="email"
+            required
             name="email"
             type="email"
-            :has-error="form.errors.has('email')"
-            :value="form.email"
-            @update:modelValue="form.email = $event"
           >
             {{ $t('email_address') }}
           </ui-input>
 
+          <!-- password input -->
           <ui-input
+            v-model="form.password"
+            :errors="form.errors"
+            error-key="email"
+            required
             name="password"
             type="password"
-            autocomplete="current-password"
-            :has-error="form.errors.has('email')"
-            :value="form.password"
-            @update:modelValue="form.password = $event"
           >
             {{ $t('password') }}
           </ui-input>
@@ -49,35 +46,44 @@
           <div class="flex items-center justify-between">
             <div class="flex items-center">
               <input
-                id="remember_me"
-                v-model="remember"
-                name="remember_me"
+                id="remember-me"
+                v-model="form.rememberMe"
+                name="remember-me"
                 type="checkbox"
-                class="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
-              />
-              <label for="remember_me" class="ml-2 block text-sm text-gray-900">
-                {{ $t('remember_me') }}
-              </label>
+                :class="['h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500']"
+              >
+              <label
+                for="remember-me"
+                class="ml-2 block text-sm text-gray-900"
+              >{{ $t('remember_me') }}</label>
             </div>
 
             <div class="text-sm">
               <nuxt-link
-                :to="{ name: 'password.request' }"
-                class="font-medium text-indigo-600 hover:text-indigo-500"
-                >{{ $t('forgot_password') }}</nuxt-link
+                to="/password/reset"
+                :class="[
+                  settings ? 'text-indigo-600' + ' ' + 'hover:text-indigo-500' :'',
+                  'font-medium '
+                ]"
               >
+                {{ $t('forgot_password') }}
+              </nuxt-link>
             </div>
           </div>
 
           <div>
-            <ui-button :loading="form.busy">{{ $t('sign_in') }}</ui-button>
+            <ui-button
+              :loading="form.busy"
+              :loading-text="$t('logging_in_to_your_account')"
+            >
+              {{ $t('log_in_to_your_account') }}
+            </ui-button>
           </div>
         </form>
-
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300"></div>
+              <div class="w-full border-t border-gray-300" />
             </div>
             <div class="relative flex justify-center text-sm">
               <span class="px-2 bg-white text-gray-500">
@@ -89,11 +95,12 @@
           <div class="mt-6">
             <div>
               <span class="w-full inline-flex rounded-md shadow-sm">
-                <nuxt-link :to="{ name: 'register' }" class="w-full">
-                  <ui-button native-type="button" type="secondary">
-                    {{ $t('register_an_account') }}
-                  </ui-button>
-                </nuxt-link>
+                <ui-button
+                  native-type="button"
+                  type="secondary"
+                >
+                  {{ $t('register_an_account') }}
+                </ui-button>
               </span>
             </div>
           </div>
@@ -103,75 +110,96 @@
     </div>
   </div>
 </template>
+<script setup>
+import { ref } from 'vue'
+import { useAuthStore } from '~/store/auth'
+import { notify } from '@kyvg/vue3-notification'
+import { useTinyHandsFetch } from '~/composables/useTinyHandsFetch'
 
-<script>
-import Form from 'vform'
-import { mapGetters } from 'vuex'
-import { forEach } from 'lodash-es'
+const { t } = useI18n()
+const settings = ref({ color: 'emerald' })
 
-export default {
+definePageMeta({
   layout: 'default',
-  middleware: 'guest',
-  data: () => ({
-    form: new Form({
-      email: '',
-      password: '',
-    }),
-    remember: false,
-  }),
+  middleware: ['check-auth', 'guest'],
+})
 
-  head() {
-    return { title: this.$t('login') }
+const form = ref({
+  email: 'admin@tiny-hands.test',
+  password: 'password',
+  rememberMe: '',
+  busy: false,
+
+  onKeydown (event) {
+    this.errors.props = []
   },
 
-  computed: {
-    ...mapGetters({
-      user: 'auth/user',
-    }),
+  params () {
+    return {
+      email: this.email,
+      password: this.password,
+      remember: this.rememberMe,
+    }
   },
 
-  methods: {
-    async login() {
-      let data
+  errors: {
+    props: [],
 
-      // Submit the form.
-      try {
-        const response = await this.form.post('/login')
-        data = response.data
+    has (key) {
+      return Object.prototype.hasOwnProperty.call(this.props, key) ?? false
+    },
 
-        // Save the token.
-        this.$store.dispatch('auth/saveToken', {
-          token: data.token,
-          remember: this.remember,
-        })
+    get (key) {
+      const keyValue = this.has(key)
 
-        // Fetch the user.
-        await this.$store.dispatch('auth/fetchUser')
-
-        // Redirect to dashboard or verification page.
-        if (!this.user.email_verified_at) {
-          this.$router.push({ name: 'verification.index' })
+      if (keyValue) {
+        if (Array.isArray(this.props[key])) {
+          return this.props[key][0]
+        } else {
+          return this.props[key]
         }
-
-        this.$router.push({ name: 'dashboard.index' })
-
-        this.$notify({
-          title: this.$t('login_successful'),
-          text: 'Welcome ' + this.user.name,
-          type: 'success',
-          duration: 5000,
-        })
-      } catch (e) {
-        forEach(e.response.data.errors, (error, i) => {
-          this.$notify({
-            title: e.response.data.message,
-            text: error[0],
-            type: 'error',
-            duration: 5000,
-          })
-        })
       }
+
+      return null
     },
   },
+
+  async post (url) {
+    try {
+      this.busy = true
+
+      const response = await useTinyHandsFetch(url, { method: 'post', body: this.params() })
+
+      this.busy = false
+
+      return response
+    } catch (err) {
+      this.busy = false
+
+      this.errors.props = err.data.errors
+    }
+  }
+})
+
+async function login () {
+  const authStore = useAuthStore()
+
+  const response = await form.value.post('/login')
+
+  if (response) {
+
+    authStore.saveToken(response.token, form.value.rememberMe)
+
+    const user = await authStore.fetchUser()
+
+    notify({
+      title: t('login_successful'),
+      text: 'Welcome ' + user.display_name,
+      type: 'success',
+      duration: 5000,
+    })
+
+    return navigateTo({ name: 'index' })
+  }
 }
 </script>

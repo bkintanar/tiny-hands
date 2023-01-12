@@ -1,0 +1,1 @@
+import{X as t,p as r}from"./entry.66efff33.js";import{a as o}from"./auth.4e66cf30.js";const i=t(async(s,a)=>{const e=o().getUser;if(!e.roles.includes("admin")&&!e.roles.includes("member"))return r({name:"index"})});export{i as default};

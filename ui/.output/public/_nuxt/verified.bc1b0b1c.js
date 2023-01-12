@@ -1,0 +1,1 @@
+import{X as t,p as r}from"./entry.66efff33.js";import{a}from"./auth.4e66cf30.js";const u=t(async(o,i)=>{const e=a().getUser;if(e&&!e.email_verified_at)return r({name:"verification.index"})});export{u as default};

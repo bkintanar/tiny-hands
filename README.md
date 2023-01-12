@@ -20,7 +20,7 @@ Tiny hands is a Laravel multi-tenant boilerplate with SPA and i18n using the fol
 ### Out of the box Setup
 - `composer install`
 - `php artisan migrate`
-- `php artisan tenancy:create tenant1`                  # this will create your first tenant (https://tenant1.tiny-hands.local/)
+- `php artisan tenancy:create tenant1`                  # this will create your first tenant (https://tenant1.tiny-hands.test/)
 - `php artisan vendor:publish --tag=tiny-hands::ui`     # publishes ui from `/ui/.output/public` to `/public`
 
 ### Compiling and publishing UI assets

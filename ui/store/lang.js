@@ -1,4 +1,4 @@
-import {defineStore} from 'pinia'
+import { defineStore } from 'pinia'
 import Cookies from 'js-cookie'
 
 export const useLangStore = defineStore('lang-store', {
@@ -7,11 +7,11 @@ export const useLangStore = defineStore('lang-store', {
   }),
 
   actions: {
-    async setLocale(locale) {
+    async setLocale (locale) {
       const { $i18n } = useNuxtApp()
       const { setLocale } = $i18n
 
-      this.locale = locale
+      this.teste = locale
       await setLocale(locale)
 
       Cookies.set('locale', locale, { expires: 365 })
@@ -19,6 +19,6 @@ export const useLangStore = defineStore('lang-store', {
   },
 
   getters: {
-    getLocale: state => state.locale,
+    getLocale: state => state.teste,
   },
 })
